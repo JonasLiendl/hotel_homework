@@ -162,6 +162,7 @@ func calculateWidth(route Route) int {
 			break
 		}
 		width = width + 20 + currentElement.element.distance
+		currentElement = currentElement.next
 	}
 	return width
 }
