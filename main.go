@@ -93,7 +93,7 @@ func calculateRoute(startID int, endID int, hotels []Hotel) (route Route, distan
 	distance = hotels[startID].distance
 	route = Route{&Node{&hotels[startID], nil}}
 	currentElement := route.First
-	for i := startID + 1; i < endID; i++ {
+	for i := startID + 1; i <= endID; i++ {
 		node := new(Node)
 		node = &Node{&hotels[i], nil}
 		currentElement.next = node
@@ -123,9 +123,9 @@ func drawHotel(img *image.Paletted, startX int, startY int) {
 }
 
 func drawConnection(img *image.Paletted, startX int, endX int, startY int) {
-	for i := 0; i < endX; i++ {
+	for i := startX; i < endX; i++ {
 		for n := 0; n < 2; n++ {
-			img.SetColorIndex(startX+i, startY+n, 1)
+			img.SetColorIndex(i, startY+n, 1)
 		}
 	}
 }
@@ -137,20 +137,26 @@ func drawGIF(route Route) {
 		panic(err)
 	}
 	width := calculateWidth(route)
-	img := initGIF(f, width, 100)
+	palette := []color.Color{color.White, color.Black}
+	rect := image.Rect(0, 0, width, 40)
+	img := image.NewPaletted(rect, palette)
+	anim := gif.GIF{Delay: []int{0}, Image: []*image.Paletted{img}}
 	currentElement := route.First
 	startY := 10
 	startX := 10
 	for {
-		drawHotel(img, startX, startY)
-		drawConnection(img, startX, startX+currentElement.element.distance, startY+10)
-		startX = startX + 20 + currentElement.element.distance
 		if currentElement.next == nil {
 			drawHotel(img, startX, startY)
-			drawConnection(img, startX, startX+currentElement.element.distance, startY+10)
 			break
+		} else {
+			drawHotel(img, startX, startY)
+			startX = startX + 19
+			drawConnection(img, startX, startX+currentElement.element.distance, startY+10)
+			startX = startX + currentElement.element.distance
+			currentElement = currentElement.next
 		}
 	}
+	gif.EncodeAll(f, &anim)
 }
 
 func calculateWidth(route Route) int {
