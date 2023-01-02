@@ -21,6 +21,7 @@ type Hotel struct {
 type Node struct {
 	element *Hotel
 	next    *Node
+	before  *Node
 }
 
 type Route struct {
@@ -45,8 +46,11 @@ func main() {
 		route, distance = calculateRoute(firstID, lastID, hotels)
 	} else if firstID > lastID {
 		route, distance = calculateRoute(lastID, firstID, hotels)
+		route = invertRoute(route)
 	} else {
-		route = Route{nil}
+		node := new(Node)
+		node = &Node{&hotels[firstID], nil, nil}
+		route = Route{node}
 		distance = 0
 	}
 	fmt.Printf("Der Abstand zwischen %s und %s beträgt %dkm\n", firstHotelName, lastHotelName, distance)
@@ -90,12 +94,16 @@ func getIndexOfHotels(firstHotelName string, lastHotelName string, hotels []Hote
 }
 
 func calculateRoute(startID int, endID int, hotels []Hotel) (route Route, distance int) {
-	distance = hotels[startID].distance
-	route = Route{&Node{&hotels[startID], nil}}
-	currentElement := route.First
-	for i := startID + 1; i <= endID; i++ {
+	var currentElement *Node
+	for i := startID; i <= endID; i++ {
+		if i == startID {
+			genesisNode := new(Node)
+			genesisNode = &Node{&hotels[startID], nil, nil}
+			route = Route{genesisNode}
+			currentElement = route.First
+		}
 		node := new(Node)
-		node = &Node{&hotels[i], nil}
+		node = &Node{&hotels[i], nil, currentElement}
 		currentElement.next = node
 		currentElement = currentElement.next
 		if i != endID {
@@ -171,4 +179,21 @@ func calculateWidth(route Route) int {
 		currentElement = currentElement.next
 	}
 	return width
+}
+
+func invertRoute(route Route) Route {
+	currentElement := route.First
+	for {
+		if currentElement.next == nil {
+			currentElement.next = currentElement.before
+			currentElement.before = nil
+			route.First = currentElement
+			break
+		}
+		nextTemp := currentElement.next
+		currentElement.next = currentElement.before
+		currentElement.before = nextTemp
+		currentElement = nextTemp
+	}
+	return route
 }
